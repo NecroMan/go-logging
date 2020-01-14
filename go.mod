@@ -1,4 +1,4 @@
-module github.com/hhkbp2/go-logging
+module github.com/NecroMan/go-logging
 
 go 1.12
 
