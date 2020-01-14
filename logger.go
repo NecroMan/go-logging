@@ -618,7 +618,7 @@ func (self *Manager) fixupParents(logger Logger) {
 				placeHolder, _ := node.(*PlaceHolder)
 				placeHolder.Append(logger)
 			case NodeLogger:
-				parent = logger
+				parent = node.(Logger)
 			default:
 				panic("invalid node type")
 			}
