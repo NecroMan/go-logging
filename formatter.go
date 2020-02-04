@@ -9,40 +9,47 @@ import (
 
 // Function type of extracting the corresponding LogRecord info for
 // the attribute string.
-type ExtractAttr func(record *LogRecord) string
+type ExtractAttr func(record *LogRecord, coloring func(string) string) string
 
 // All predefined attribute string and their ExtractAttr functions.
 var (
 	attrToFunc = map[string]ExtractAttr{
-		"%(name)s": func(record *LogRecord) string {
+		"%(name)s": func(record *LogRecord, coloring func(string) string) string {
 			return record.Name
 		},
-		"%(levelno)d": func(record *LogRecord) string {
+		"%(levelno)d": func(record *LogRecord, coloring func(string) string) string {
 			return fmt.Sprintf("%d", record.Level)
 		},
-		"%(levelname)s": func(record *LogRecord) string {
-			return GetLevelName(record.Level)
+		"%(levelname)s": func(record *LogRecord, coloring func(string) string) string {
+			value := GetLevelName(record.Level)
+			if coloring != nil {
+				value = coloring(value)
+			}
+			return value
 		},
-		"%(pathname)s": func(record *LogRecord) string {
+		"%(pathname)s": func(record *LogRecord, coloring func(string) string) string {
 			return record.PathName
 		},
-		"%(filename)s": func(record *LogRecord) string {
+		"%(filename)s": func(record *LogRecord, coloring func(string) string) string {
 			return record.FileName
 		},
-		"%(lineno)d": func(record *LogRecord) string {
+		"%(lineno)d": func(record *LogRecord, coloring func(string) string) string {
 			return fmt.Sprintf("%d", record.LineNo)
 		},
-		"%(funcname)s": func(record *LogRecord) string {
+		"%(funcname)s": func(record *LogRecord, coloring func(string) string) string {
 			return record.FuncName
 		},
-		"%(created)d": func(record *LogRecord) string {
+		"%(created)d": func(record *LogRecord, coloring func(string) string) string {
 			return fmt.Sprintf("%d", record.CreatedTime.UnixNano())
 		},
-		"%(asctime)s": func(record *LogRecord) string {
+		"%(asctime)s": func(record *LogRecord, coloring func(string) string) string {
 			return record.AscTime
 		},
-		"%(message)s": func(record *LogRecord) string {
+		"%(message)s": func(record *LogRecord, coloring func(string) string) string {
 			return record.Message
+		},
+		"%(colorize)s": func(record *LogRecord, coloring func(string) string) string {
+			return ""
 		},
 	}
 	formatRe = initFormatRegexp()
@@ -66,7 +73,7 @@ func initFormatRegexp() *regexp.Regexp {
 	return regexp.MustCompile(re)
 }
 
-type GetFormatArgsFunc func(record *LogRecord) []interface{}
+type GetFormatArgsFunc func(record *LogRecord, colorize bool) []interface{}
 
 // Formatter interface is for converting a LogRecord to text.
 // Formatters need to know how a LogRecord is constructed. They are responsible
@@ -105,16 +112,21 @@ type StandardFormatter struct {
 	toFormatTime      bool
 	dateFormat        string
 	dateFormatter     *strftime.Formatter
+	colorize          bool
 }
 
 // Initialize the formatter with specified format strings.
 // Allow for specialized date formatting with the dateFormat arguement.
 func NewStandardFormatter(format string, dateFormat string) *StandardFormatter {
 	toFormatTime := false
+	colorize := false
 	size := 0
 	f1 := func(match string) string {
 		if match == "%%" {
 			return "%"
+		}
+		if match == "%(colorize)s" {
+			colorize = true
 		}
 		if match == "%(asctime)s" {
 			toFormatTime = true
@@ -132,10 +144,16 @@ func NewStandardFormatter(format string, dateFormat string) *StandardFormatter {
 		return match
 	}
 	formatRe.ReplaceAllStringFunc(format, f2)
-	getFormatArgsFunc := func(record *LogRecord) []interface{} {
+	getFormatArgsFunc := func(record *LogRecord, colorize bool) []interface{} {
 		result := make([]interface{}, 0, len(funs))
 		for _, f := range funs {
-			result = append(result, f(record))
+			var value string
+			if colorize {
+				value = f(record, GetLevelColorFunc(record.Level))
+			} else {
+				value = f(record, nil)
+			}
+			result = append(result, value)
 		}
 		return result
 	}
@@ -150,6 +168,7 @@ func NewStandardFormatter(format string, dateFormat string) *StandardFormatter {
 		toFormatTime:      toFormatTime,
 		dateFormat:        dateFormat,
 		dateFormatter:     dateFormatter,
+		colorize:          colorize,
 	}
 }
 
@@ -181,7 +200,7 @@ func (self *StandardFormatter) Format(record *LogRecord) string {
 // Helper function using regexp to replace every valid format attribute string
 // to the record's specific value.
 func (self *StandardFormatter) FormatAll(record *LogRecord) string {
-	return fmt.Sprintf(self.strFormat, self.getFormatArgsFunc(record)...)
+	return fmt.Sprintf(self.strFormat, self.getFormatArgsFunc(record, self.colorize)...)
 }
 
 // A formatter suitable for formatting a number of records.

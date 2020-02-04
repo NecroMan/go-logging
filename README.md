@@ -2,7 +2,8 @@ go-logging
 ==========
 
 Fork of another library with additional features:
-* Handlers and loggers levels now not minimal level but list of levels handler and logger should process; 
+* Handlers and loggers levels now not minimal level but list of levels handler and logger should process;
+* Colorizing record's level through format string (add "%(colorize)s" to format string); 
 * Fixed bugs.
 
 ---

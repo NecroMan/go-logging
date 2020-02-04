@@ -2,6 +2,7 @@ package logging
 
 import (
 	"fmt"
+	"github.com/mgutz/ansi"
 	"sync"
 )
 
@@ -45,6 +46,16 @@ var (
 		"NOTSET": LevelNotset,
 	}
 	levelLock sync.RWMutex
+
+	levelColors = map[LogLevelType]func(string) string{
+		LevelFatal:  ansi.ColorFunc("red+h"),
+		LevelError:  ansi.ColorFunc("magenta+h"),
+		LevelWarn:   ansi.ColorFunc("yellow+h"),
+		LevelInfo:   ansi.ColorFunc("cyan+h"),
+		LevelDebug:  ansi.ColorFunc("white+h"),
+		LevelTrace:  ansi.ColorFunc("white+h"),
+		LevelNotset: ansi.ColorFunc("off"),
+	}
 )
 
 // Print the name of corresponding log level.
@@ -73,6 +84,10 @@ func GetLevelName(level LogLevelType) (name string) {
 		return fmt.Sprintf("Level %d", uint8(level))
 	}
 	return name
+}
+
+func GetLevelColorFunc(levelType LogLevelType) func(string) string {
+	return levelColors[levelType]
 }
 
 // Associate levelName with level.
