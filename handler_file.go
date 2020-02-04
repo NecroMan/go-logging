@@ -130,7 +130,7 @@ func NewFileHandler(filename string, mode int, bufferSize int) (*FileHandler, er
 	if err != nil {
 		return nil, err
 	}
-	handler := NewStreamHandler(filepath, LevelNotset, nil)
+	handler := NewStreamHandler(filepath, []LogLevelType{LevelNotset}, nil)
 	object := &FileHandler{
 		StreamHandler: handler,
 		filepath:      filepath,

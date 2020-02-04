@@ -40,7 +40,7 @@ type StdoutHandler struct {
 
 func NewStdoutHandler() *StdoutHandler {
 	stream := NewStdoutStream()
-	handler := NewStreamHandler("stdout", LevelNotset, stream)
+	handler := NewStreamHandler("stdout", []LogLevelType{LevelNotset}, stream)
 	object := &StdoutHandler{
 		StreamHandler: handler,
 	}
