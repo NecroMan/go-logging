@@ -26,7 +26,7 @@ type BaseBufferingHandler struct {
 
 func NewBaseBufferingHandler(capacity uint64) *BaseBufferingHandler {
 	return &BaseBufferingHandler{
-		BaseHandler: NewBaseHandler("", LevelNotset),
+		BaseHandler: NewBaseHandler("", []LogLevelType{LevelNotset}),
 		capacity:    capacity,
 		buffer:      list.New(),
 	}

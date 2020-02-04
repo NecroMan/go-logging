@@ -1,6 +1,12 @@
 go-logging
 ==========
 
+Fork of another library with additional features:
+* Handlers and loggers levels now not minimal level but list of levels handler and logger should process; 
+* Fixed bugs.
+
+---
+
 ```go-logging``` is a Golang library that implements the Python-like logging facility. 
 
 As we all know that logging is essientially significant for server side programming because in general logging the only way to report what happens inside the program. 
@@ -34,7 +40,7 @@ go get github.com/hhkbp2/go-logging
 package main
 
 import (
-	"github.com/hhkbp2/go-logging"
+	"github.com/NecroMan/go-logging"
 )
 
 func main() {
@@ -110,7 +116,7 @@ Compile and run the code above, it would generate a log file "./test.log" under 
 
 Write a configuration file ```config.yml``` as the following:
 
-```go
+```yaml
 formatters:
     f:
         format: "%(asctime)s %(levelname)s (%(filename)s:%(lineno)d) %(name)s %(message)s"
@@ -141,12 +147,12 @@ and use it to config logging facility like:
 package main
 
 import (
-	"github.com/hhkbp2/go-logging"
+	"github.com/NecroMan/go-logging"
 )
 
 func main() {
-	config_file := "./config.yml"
-	if err := logging.ApplyConfigFile(config_file); err != nil {
+	configFile := "./config.yml"
+	if err := logging.ApplyConfigFile(configFile); err != nil {
 		panic(err.Error())
 	}
 	logger := logging.GetLogger("a.b.c")

@@ -296,22 +296,27 @@ func NewConfigEnv() *ConfEnv {
 }
 
 type SetLevelable interface {
-	SetLevel(level LogLevelType) error
+	SetLevels(levels []LogLevelType) error
 }
 
 func ConfigLevel(m ConfMap, i SetLevelable) error {
 	if arg, ok := m["level"]; ok {
-		levelIn, ok := arg.(string)
+		levelsIn, ok := arg.([]interface{})
 		if !ok {
 			return errors.New(fmt.Sprintf(
-				"level value: %#v should be of type string", arg))
+				"level value: %#v should be of type array of strings", arg))
 		}
-		levelIn = strings.ToUpper(levelIn)
-		level, ok := nameToLevels[levelIn]
-		if !ok {
-			return errors.New(fmt.Sprintf("unknown level: %s", levelIn))
+		levels := make([]LogLevelType, len(levelsIn))
+		for index, level := range levelsIn {
+			levelName := strings.ToUpper(level.(string))
+			level, ok := nameToLevels[levelName]
+			if !ok {
+				return errors.New(fmt.Sprintf("unknown level: %s", levelName))
+			}
+			levels[index] = level
 		}
-		return i.SetLevel(level)
+
+		return i.SetLevels(levels)
 	}
 	return nil
 }

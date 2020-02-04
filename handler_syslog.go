@@ -27,7 +27,7 @@ func NewSyslogHandler(
 		return nil, err
 	}
 	object := &SyslogHandler{
-		BaseHandler: NewBaseHandler("", LevelNotset),
+		BaseHandler: NewBaseHandler("", []LogLevelType{LevelNotset}),
 		network:     "",
 		raddr:       "",
 		priority:    priority,
@@ -49,7 +49,7 @@ func NewSyslogHandlerToAddr(
 		return nil, err
 	}
 	object := &SyslogHandler{
-		BaseHandler: NewBaseHandler("", LevelNotset),
+		BaseHandler: NewBaseHandler("", []LogLevelType{LevelNotset}),
 		network:     network,
 		raddr:       raddr,
 		priority:    priority,

@@ -54,7 +54,7 @@ func NewSocketHandler(host string, port uint16) *SocketHandler {
 		Delay(SocketDefaultDelay).
 		Deadline(SocketDefaultMaxDeadline)
 	object := &SocketHandler{
-		BaseHandler:  NewBaseHandler("", LevelNotset),
+		BaseHandler:  NewBaseHandler("", []LogLevelType{LevelNotset}),
 		host:         host,
 		port:         port,
 		closeOnError: true,

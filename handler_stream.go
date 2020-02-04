@@ -22,10 +22,10 @@ type StreamHandler struct {
 
 // Initialize a stream handler with name, logging level and underlying stream.
 func NewStreamHandler(
-	name string, level LogLevelType, stream Stream) *StreamHandler {
+	name string, levels []LogLevelType, stream Stream) *StreamHandler {
 
 	object := &StreamHandler{
-		BaseHandler: NewBaseHandler(name, level),
+		BaseHandler: NewBaseHandler(name, levels),
 		stream:      stream,
 	}
 	Closer.AddHandler(object)

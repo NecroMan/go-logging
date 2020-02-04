@@ -14,7 +14,7 @@ type NullHandler struct {
 // Initialize a NullHandler.
 func NewNullHandler() *NullHandler {
 	object := &NullHandler{
-		BaseHandler: NewBaseHandler("", LevelNotset),
+		BaseHandler: NewBaseHandler("", []LogLevelType{LevelNotset}),
 	}
 	Closer.AddHandler(object)
 	return object

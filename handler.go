@@ -12,10 +12,10 @@ type Handler interface {
 	GetName() string
 	// Set the name of Handler.
 	SetName(name string)
-	// Return the log level of Handler.
-	GetLevel() LogLevelType
-	// Set the log level of Handler.
-	SetLevel(level LogLevelType) error
+	// Return the log levels of Handler.
+	GetLevels() []LogLevelType
+	// Set the log levels of Handler.
+	SetLevels(level []LogLevelType) error
 
 	// For Formatter.
 	// Format the specified record.
@@ -45,7 +45,7 @@ type BaseHandler struct {
 	*StandardFilterer
 	name          string
 	nameLock      sync.RWMutex
-	level         LogLevelType
+	levels        []LogLevelType
 	levelLock     sync.RWMutex
 	formatter     Formatter
 	formatterLock sync.RWMutex
@@ -55,11 +55,11 @@ type BaseHandler struct {
 
 // Initialize the instance - basically setting the formatter to nil and the
 // filterer without filter.
-func NewBaseHandler(name string, level LogLevelType) *BaseHandler {
+func NewBaseHandler(name string, levels []LogLevelType) *BaseHandler {
 	return &BaseHandler{
 		StandardFilterer: NewStandardFilterer(),
 		name:             name,
-		level:            level,
+		levels:           levels,
 		formatter:        nil,
 	}
 }
@@ -76,20 +76,22 @@ func (self *BaseHandler) SetName(name string) {
 	self.name = name
 }
 
-func (self *BaseHandler) GetLevel() LogLevelType {
+func (self *BaseHandler) GetLevels() []LogLevelType {
 	self.levelLock.RLock()
 	defer self.levelLock.RUnlock()
-	return self.level
+	return self.levels
 }
 
-func (self *BaseHandler) SetLevel(level LogLevelType) error {
+func (self *BaseHandler) SetLevels(levels []LogLevelType) error {
 	self.levelLock.Lock()
 	defer self.levelLock.Unlock()
-	_, ok := getLevelName(level)
-	if !ok {
-		return ErrorNoSuchLevel
+	for _, level := range levels {
+		_, ok := getLevelName(level)
+		if !ok {
+			return ErrorNoSuchLevel
+		}
 	}
-	self.level = level
+	self.levels = levels
 	return nil
 }
 

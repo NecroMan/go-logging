@@ -82,15 +82,15 @@ type Logger interface {
 	// Set the propagate.
 	SetPropagate(v bool)
 	// Return the logging level attached to this Logger.
-	GetLevel() LogLevelType
+	GetLevels() []LogLevelType
 	// Set the logging level attached to this Logger.
-	SetLevel(level LogLevelType) error
+	SetLevels(level []LogLevelType) error
 	// Query whether this Logger is enabled for specified logging level.
 	IsEnabledFor(level LogLevelType) bool
 	// Get the effective level for this Logger.
 	// An effective level is the first level value of Logger and its all parent
 	// in the Logger hierarchy, which is not equal to LevelNotset.
-	GetEffectiveLevel() LogLevelType
+	GetEffectiveLevels() []LogLevelType
 
 	// Fatal formats using the default formats for its operands and
 	// logs a message with severity "LevelFatal".
@@ -187,7 +187,7 @@ func findCaller() *CallerInfo {
 type StandardLogger struct {
 	*StandardFilterer
 	name           string
-	level          LogLevelType
+	levels         []LogLevelType
 	findCallerFunc FindCallerFunc
 	parent         Logger
 	propagate      bool
@@ -197,13 +197,13 @@ type StandardLogger struct {
 }
 
 // Initialize a standard logger instance with name and logging level.
-func NewStandardLogger(name string, level LogLevelType) *StandardLogger {
+func NewStandardLogger(name string, levels []LogLevelType) *StandardLogger {
 	object := &StandardLogger{
 		StandardFilterer: NewStandardFilterer(),
 		parent:           nil,
 		name:             name,
 		findCallerFunc:   findCaller,
-		level:            level,
+		levels:           levels,
 		propagate:        true,
 		handlers:         NewListSet(),
 		manager:          nil,
@@ -239,42 +239,50 @@ func (self *StandardLogger) SetPropagate(v bool) {
 	self.propagate = v
 }
 
-func (self *StandardLogger) GetLevel() LogLevelType {
+func (self *StandardLogger) GetLevels() []LogLevelType {
 	self.lock.RLock()
 	defer self.lock.RUnlock()
-	return self.level
+	return self.levels
 }
 
-func (self *StandardLogger) SetLevel(level LogLevelType) error {
-	_, ok := getLevelName(level)
-	if !ok {
-		return ErrorNoSuchLevel
+func (self *StandardLogger) SetLevels(levels []LogLevelType) error {
+	for _, level := range levels {
+		_, ok := getLevelName(level)
+		if !ok {
+			return ErrorNoSuchLevel
+		}
 	}
 	self.lock.Lock()
 	defer self.lock.Unlock()
-	self.level = level
+	self.levels = levels
 	return nil
 }
 
 func (self *StandardLogger) IsEnabledFor(level LogLevelType) bool {
-	return level >= self.GetEffectiveLevel()
+	for _, l := range self.GetEffectiveLevels() {
+		if level == l {
+			return true
+		}
+	}
+
+	return false
 }
 
 // Get the effective level for this logger.
 // Loop through this logger and its parents in the logger hierarchy,
 // looking for a non-zero logging level. Return the first one found.
-func (self *StandardLogger) GetEffectiveLevel() LogLevelType {
+func (self *StandardLogger) GetEffectiveLevels() []LogLevelType {
 	self.lock.RLock()
 	defer self.lock.RUnlock()
 	var logger Logger = self
 	for logger != nil {
-		level := logger.GetLevel()
-		if level != LevelNotset {
-			return level
+		levels := logger.GetLevels()
+		if len(levels) > 1 || levels[0] != LevelNotset {
+			return levels
 		}
 		logger = logger.GetParent()
 	}
-	return LevelNotset
+	return []LogLevelType{LevelNotset}
 }
 
 func (self *StandardLogger) Fatal(args ...interface{}) {
@@ -471,8 +479,10 @@ func (self *StandardLogger) CallHandlers(record *LogRecord) {
 	defer self.lock.RUnlock()
 	for e := self.handlers.Front(); e != nil; e = e.Next() {
 		handler, _ := e.Value.(Handler)
-		if record.Level >= handler.GetLevel() {
-			handler.Handle(record)
+		for _, level := range handler.GetLevels() {
+			if record.Level == level {
+				handler.Handle(record)
+			}
 		}
 	}
 }
@@ -523,8 +533,8 @@ type RootLogger struct {
 }
 
 // Initialize the root logger with the name "root".
-func NewRootLogger(level LogLevelType) *RootLogger {
-	logger := NewStandardLogger("root", level)
+func NewRootLogger(levels []LogLevelType) *RootLogger {
+	logger := NewStandardLogger("root", levels)
 	logger.SetPropagate(false)
 	return &RootLogger{
 		StandardLogger: logger,
@@ -536,7 +546,7 @@ type LoggerMaker func(name string) Logger
 
 // The default logger maker for this module.
 func defaultLoggerMaker(name string) Logger {
-	return NewStandardLogger(name, LevelNotset)
+	return NewStandardLogger(name, []LogLevelType{LevelNotset})
 }
 
 // This is [under normal circumstances] just one manager instance, which

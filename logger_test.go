@@ -20,7 +20,7 @@ type MockHandler struct {
 
 func NewMockHandler(t *testing.T) *MockHandler {
 	object := &MockHandler{
-		BaseHandler: NewBaseHandler("", LevelDebug),
+		BaseHandler: NewBaseHandler("", []LogLevelType{LevelDebug}),
 		emitChan:    make(chan *LogRecord, 100),
 	}
 	Closer.AddHandler(object)
@@ -54,7 +54,7 @@ func (self *MockHandler) GetEmitOnTimeout(
 func TestLoggerLogToHandler(t *testing.T) {
 	defer Shutdown()
 	logger := GetLogger("b")
-	logger.SetLevel(LevelDebug)
+	logger.SetLevels([]LogLevelType{LevelDebug})
 	require.Equal(t, 0, len(logger.GetHandlers()))
 	handler := NewMockHandler(t)
 	logger.AddHandler(handler)
@@ -69,7 +69,7 @@ func TestLoggerLogToHandler(t *testing.T) {
 	require.Equal(t, fmt.Sprintf(format, message), record.GetMessage())
 
 	// test default format for operand
-	testError := fmt.Errorf("Example error")
+	testError := fmt.Errorf("example error")
 	logger.Debug(testError)
 	record, err = handler.GetEmitOnTimeout(time.Second * 0)
 	require.Nil(t, err)

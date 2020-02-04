@@ -51,7 +51,7 @@ func init() {
 }
 
 func initialize() {
-	root = NewRootLogger(LevelWarn)
+	root = NewRootLogger([]LogLevelType{LevelWarn})
 	manager = NewManager(root)
 	Closer = NewHandlerCloser()
 }
