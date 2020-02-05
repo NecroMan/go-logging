@@ -3,7 +3,7 @@ go-logging
 
 Fork of another library with additional features:
 * Handlers and loggers levels now not minimal level but list of levels handler and logger should process;
-* Colorizing record's level through format string (add "%(colorize)s" to format string); 
+* Colorizing record's level through format string (add "colorize:" to begin of format string); 
 * Fixed bugs.
 
 ---
@@ -64,7 +64,7 @@ message: Hello 2015
 package main
 
 import (
-	"github.com/hhkbp2/go-logging"
+	"github.com/NecroMan/go-logging"
 	"os"
 	"time"
 )
@@ -122,6 +122,9 @@ formatters:
     f:
         format: "%(asctime)s %(levelname)s (%(filename)s:%(lineno)d) %(name)s %(message)s"
         datefmt: "%Y-%m-%d %H:%M:%S.%3n"
+    t:
+        format: "colorize: %(asctime)s %(levelname)s (%(filename)s:%(lineno)d) %(name)s %(message)s"
+        datefmt: "%H:%M:%S.%3n"
 handlers:
     h:
         class: RotatingFileHandler

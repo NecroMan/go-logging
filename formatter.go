@@ -5,50 +5,53 @@ import (
 	"fmt"
 	"github.com/hhkbp2/go-strftime"
 	"regexp"
+	"strings"
 )
 
 // Function type of extracting the corresponding LogRecord info for
 // the attribute string.
-type ExtractAttr func(record *LogRecord, coloring func(string) string) string
+type ExtractAttr func(record *LogRecord, colorize bool) string
 
 // All predefined attribute string and their ExtractAttr functions.
 var (
 	attrToFunc = map[string]ExtractAttr{
-		"%(name)s": func(record *LogRecord, coloring func(string) string) string {
+		"%(name)s": func(record *LogRecord, colorize bool) string {
 			return record.Name
 		},
-		"%(levelno)d": func(record *LogRecord, coloring func(string) string) string {
+		"%(levelno)d": func(record *LogRecord, colorize bool) string {
 			return fmt.Sprintf("%d", record.Level)
 		},
-		"%(levelname)s": func(record *LogRecord, coloring func(string) string) string {
+		"%(levelname)s": func(record *LogRecord, colorize bool) string {
 			value := GetLevelName(record.Level)
-			if coloring != nil {
-				value = coloring(value)
+			if colorize {
+				if f := GetLevelColorFunc(record.Level); f != nil {
+					value = f(value)
+				}
 			}
 			return value
 		},
-		"%(pathname)s": func(record *LogRecord, coloring func(string) string) string {
+		"%(pathname)s": func(record *LogRecord, colorize bool) string {
 			return record.PathName
 		},
-		"%(filename)s": func(record *LogRecord, coloring func(string) string) string {
+		"%(filename)s": func(record *LogRecord, colorize bool) string {
 			return record.FileName
 		},
-		"%(lineno)d": func(record *LogRecord, coloring func(string) string) string {
+		"%(lineno)d": func(record *LogRecord, colorize bool) string {
 			return fmt.Sprintf("%d", record.LineNo)
 		},
-		"%(funcname)s": func(record *LogRecord, coloring func(string) string) string {
+		"%(funcname)s": func(record *LogRecord, colorize bool) string {
 			return record.FuncName
 		},
-		"%(created)d": func(record *LogRecord, coloring func(string) string) string {
+		"%(created)d": func(record *LogRecord, colorize bool) string {
 			return fmt.Sprintf("%d", record.CreatedTime.UnixNano())
 		},
-		"%(asctime)s": func(record *LogRecord, coloring func(string) string) string {
+		"%(asctime)s": func(record *LogRecord, colorize bool) string {
 			return record.AscTime
 		},
-		"%(message)s": func(record *LogRecord, coloring func(string) string) string {
+		"%(message)s": func(record *LogRecord, colorize bool) string {
 			return record.Message
 		},
-		"%(colorize)s": func(record *LogRecord, coloring func(string) string) string {
+		"%(colorize)s": func(record *LogRecord, colorize bool) string {
 			return ""
 		},
 	}
@@ -121,12 +124,13 @@ func NewStandardFormatter(format string, dateFormat string) *StandardFormatter {
 	toFormatTime := false
 	colorize := false
 	size := 0
+	if strings.HasPrefix(format, "colorize:") {
+		colorize = true
+		format = strings.TrimSpace(strings.Replace(format, "colorize:", "", 1))
+	}
 	f1 := func(match string) string {
 		if match == "%%" {
 			return "%"
-		}
-		if match == "%(colorize)s" {
-			colorize = true
 		}
 		if match == "%(asctime)s" {
 			toFormatTime = true
@@ -147,13 +151,7 @@ func NewStandardFormatter(format string, dateFormat string) *StandardFormatter {
 	getFormatArgsFunc := func(record *LogRecord, colorize bool) []interface{} {
 		result := make([]interface{}, 0, len(funs))
 		for _, f := range funs {
-			var value string
-			if colorize {
-				value = f(record, GetLevelColorFunc(record.Level))
-			} else {
-				value = f(record, nil)
-			}
-			result = append(result, value)
+			result = append(result, f(record, colorize))
 		}
 		return result
 	}

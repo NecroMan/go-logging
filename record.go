@@ -64,12 +64,12 @@ func (self *LogRecord) String() string {
 // Return the message for this LogRecord.
 // The message is composed of the Message and any user-supplied arguments.
 func (self *LogRecord) GetMessage() string {
-	if len(self.Message) == 0 {
-		if self.UseFormat {
-			self.Message = fmt.Sprintf(self.Format, self.Args...)
-		} else {
-			self.Message = fmt.Sprint(self.Args...)
-		}
+	//if len(self.Message) == 0 {  // BUG when different formats use with propagation
+	if self.UseFormat {
+		self.Message = fmt.Sprintf(self.Format, self.Args...)
+	} else {
+		self.Message = fmt.Sprint(self.Args...)
 	}
+	//}
 	return self.Message
 }
