@@ -51,9 +51,6 @@ var (
 		"%(message)s": func(record *LogRecord, colorize bool) string {
 			return record.Message
 		},
-		"%(colorize)s": func(record *LogRecord, colorize bool) string {
-			return ""
-		},
 	}
 	formatRe = initFormatRegexp()
 

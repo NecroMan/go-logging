@@ -299,12 +299,12 @@ type SetLevelable interface {
 	SetLevels(levels []LogLevelType) error
 }
 
-func ConfigLevel(m ConfMap, i SetLevelable) error {
-	if arg, ok := m["level"]; ok {
+func ConfigLevels(m ConfMap, i SetLevelable) error {
+	if arg, ok := m["levels"]; ok {
 		levelsIn, ok := arg.([]interface{})
 		if !ok {
 			return errors.New(fmt.Sprintf(
-				"level value: %#v should be of type array of strings", arg))
+				"levels value: %#v should be of type array of strings", arg))
 		}
 		levels := make([]LogLevelType, len(levelsIn))
 		for index, level := range levelsIn {
@@ -392,7 +392,7 @@ func ConfigFilters(m ConfMap, i Filterer, env *ConfEnv) error {
 }
 
 func ConfigLogger(m ConfMap, logger Logger, isRoot bool, env *ConfEnv) error {
-	if err := ConfigLevel(m, logger); err != nil {
+	if err := ConfigLevels(m, logger); err != nil {
 		return err
 	}
 	// propagate setting will not be applicable to root logger
@@ -646,7 +646,7 @@ func DictConfig(conf *Conf) error {
 		default:
 			return errors.New(fmt.Sprintf("unsupported class name: %s", className))
 		}
-		if err := ConfigLevel(m, handler); err != nil {
+		if err := ConfigLevels(m, handler); err != nil {
 			return err
 		}
 		if err := ConfigFormatters(m, handler, env); err != nil {
